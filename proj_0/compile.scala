@@ -68,12 +68,12 @@ def compile(exp : Exp) {
 	    case TimesExp(exp1, exp2) => AppExp( AppExp(mul(), compile(exp1)), compile(exp2))
 	    case EqExp(exp1, exp2) => compile( AndExp( AppExp(zero_huh(), SubExp(exp1, exp2)),
 	    	 	     	      	       	       AppExp(zero_huh(), SubExp(exp2, exp1))))
-	    case NullExp() =>
-	    case ConsExp(car,cdr)
-	    case CarExp(pair)
-	    case CdrExp(pair)
-	    case PairPExp(arg)
-	    case NullPExp(arg)
+	    case NullExp() => nil()
+	    case ConsExp(car,cdr) => AppExp( AppExp(cons(), compile(car)), compile(cdr))
+	    case CarExp(pair) => AppExp(car(), compile(pair))
+	    case CdrExp(pair) => AppExp(cdr(), compile(pair))
+	    case PairPExp(arg) => AppExp(pair_huh(), compile(arg))
+	    case NullPExp(arg) => AppExp(null_huh(), compile(arg))
 	    
 	    case LambdaExp(params, body) =>
 	    	 if(args.isEmpty)
@@ -89,8 +89,8 @@ def compile(exp : Exp) {
 			LambdaExp(params.head, compile(LambdaExp(params.tail, body)))	
 		 }
 	    
-	    case LetExp(vars, exps, body)
-	    case LetRecExp(fun, lam, body)
+	    case LetExp(vars, exps, body) => compile(AppExp( LambdaExp(vars, body), exps))
+	    case LetRecExp(fun, lam, body) => 
 	    
 	    case AppExp(fun,args) =>
 	    	 if(args.isEmpty) /* void */
@@ -142,7 +142,7 @@ def false()
 
 def zero_huh()
 {
-	LambdaExp(List("n"), AppExp( AppExp( RefExp("n"), LambdaExp(List(), false())), true()))
+	LambdaExp(List("n"), AppExp( AppExp( RefExp("n"), LambdaExp(List("_"), false())), true()))
 }
 
 def sum()
@@ -186,4 +186,56 @@ def pred()
 def sub()
 {
 	LambdaExp(List("n"), LambdaExp(List("m"), AppExp( AppExp(RefExp("m"), pred()), RefExp("n"))))
+}
+
+def cons()
+{
+	LambdaExp(List("car"),
+		LambdaExp(List("cdr"), 
+			LambdaExp(List("on-cons"),
+				LambdaExp(List("on-nil"),
+					AppExp( AppExp( RefExp("on-cons"), RefExp("car"))
+						RefExp("cdr"))))))
+}
+
+def nil()
+{
+	LambdaExp(List("on-cons"),
+		LambdaExp(List("on-nil"),
+			AppExp(RefExp("on-nil"), void())))
+}
+
+def car()
+{
+	LambdaExp(List("list"), 
+		AppExp( AppExp(RefExp("list"),
+			LambdaExp(List("car"),
+				LambdaExp(List("cdr"),
+					RefExp("car")))),
+			error()))
+}
+
+def cdr()
+{
+	LambdaExp(List("list"),
+		AppExp( AppExp(RefExp("list"),
+				LambdaExp(List("car"),
+					LambdaExp(List("cdr"), RefExp("cdr"))))
+			,error()))
+}
+
+def pair_huh()
+{
+	LambdaExp(List("list"),
+		AppExp( AppExp(RefExp("list"),
+				LambdaExp(List("_"), LambdaExp(List("_") , true()))),
+			LambdaExp(List("_"), false())))
+}
+
+def null_huh()
+{
+	LambdaExp(List("list"), AppExp( AppExp(RefExp("list"),
+						LambdaExp(List("_"),
+							LambdaExp(List("_"), false()))),
+					LambdaExp(List("_"), true())))
 }
