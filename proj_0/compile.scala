@@ -90,8 +90,9 @@ def compile(exp : Exp) {
 		 }
 	    
 	    case LetExp(vars, exps, body) => compile(AppExp( LambdaExp(vars, body), exps))
-	    case LetRecExp(fun, lam, body) => 
-	    
+	    case LetRecExp(fun, lam, body) => compile(LetExp(List(fun), AppExp( y_comb(),
+	    	 		     	      	      				LambdaExp(fun, lam)),
+									body))
 	    case AppExp(fun,args) =>
 	    	 if(args.isEmpty) /* void */
 		 {
@@ -238,4 +239,22 @@ def null_huh()
 						LambdaExp(List("_"),
 							LambdaExp(List("_"), false()))),
 					LambdaExp(List("_"), true())))
+}
+
+def y_comb()
+{
+	AppExp(LambdaExp(List("y"), 
+			LambdaExp(List("F"),
+				AppExp(RefExp("F"),
+					LambdaExp(List("x"),
+						AppExp( AppExp( AppExp(RefExp("y"), RefExp("y")),
+								RefExp("F")),
+							RefExp("x")))))),
+		LambdaExp(List("y"),
+			LambdaExp(List("F"),
+				AppExp(RefExp("F"),
+					LambdaExp(List("x"),
+						AppExp( AppExp( AppExp(RefExp("y"), RefExp("y")),
+								RefExp("F")),
+							RefExp("x")))))))
 }
